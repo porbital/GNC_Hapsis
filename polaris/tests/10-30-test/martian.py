@@ -29,7 +29,7 @@
 #+----------------------------------------------------------------+#
 
 import time
-import board
+import board # type: ignore
 import digitalio
 import adafruit_bno055
 import busio
@@ -40,7 +40,7 @@ import storage
 
 # PID constants (Based on Simulation)
 Kp = 0.56
-Kd = 0.50
+Kd = 0.45
 
 # Desired heading
 # 0 -> North
@@ -48,6 +48,12 @@ Kd = 0.50
 # 180 -> South
 # 270 -> West
 setpoint = 0  # (Degrees) Point north
+
+# Define heading sequence and timing
+headings = [90, 180, 270]
+heading_index = 0
+last_heading_change = time.monotonic()
+heading_interval = 5  # seconds
 
 # PID variables
 previous_error = 0
@@ -144,8 +150,18 @@ try:
     # Function to get current heading
     def get_current_heading():
         heading = sensor.euler[0]
-        print(heading)
+        #print(heading)
         return heading
+
+    # 
+    def cycle_headings():
+        global heading_index, last_heading_change, setpoint
+        current_time = time.monotonic()
+
+        if current_time - last_heading_change >= heading_interval:
+            setpoint = headings[heading_index]
+            heading_index = (heading_index + 1) % len(headings)  # Cycle through headings
+            last_heading_change = current_time
 
     # Init log file
     with open(filename, "w") as file:
@@ -156,6 +172,9 @@ try:
     while True:
                
         try:
+            # Loop through different headings
+            cycle_headings()
+
             current_time = time.monotonic()  # Store monotonic time
             current_heading = get_current_heading()
             
@@ -218,7 +237,6 @@ try:
                         negative_thruster_on = False
                         red_led.value = False
                         yellow_led.value = False
-
             # Blink LED
             if current_time - last_toggle_time >= blink_interval:
                 led_state = not led_state  # Toggle LED
@@ -255,4 +273,5 @@ except Exception as e:
         time.sleep(0.25)
         red_led.value = False
         time.sleep(0.25)
+
 

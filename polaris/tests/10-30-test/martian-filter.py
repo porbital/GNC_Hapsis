@@ -29,7 +29,7 @@
 #+----------------------------------------------------------------+#
 
 import time
-import board
+import board # type: ignore
 import digitalio
 import adafruit_bno055
 import busio
@@ -40,7 +40,10 @@ import storage
 
 # PID constants (Based on Simulation)
 Kp = 0.56
-Kd = 0.50
+Kd = 0.45
+
+alpha = 0.2
+filtered_derivative = 0
 
 # Desired heading
 # 0 -> North
@@ -48,6 +51,12 @@ Kd = 0.50
 # 180 -> South
 # 270 -> West
 setpoint = 0  # (Degrees) Point north
+
+# Define heading sequence and timing
+headings = [90, 180, 270]
+heading_index = 0
+last_heading_change = time.monotonic()
+heading_interval = 5  # seconds
 
 # PID variables
 previous_error = 0
@@ -144,8 +153,18 @@ try:
     # Function to get current heading
     def get_current_heading():
         heading = sensor.euler[0]
-        print(heading)
+        #print(heading)
         return heading
+
+    # 
+    def cycle_headings():
+        global heading_index, last_heading_change, setpoint
+        current_time = time.monotonic()
+
+        if current_time - last_heading_change >= heading_interval:
+            setpoint = headings[heading_index]
+            heading_index = (heading_index + 1) % len(headings)  # Cycle through headings
+            last_heading_change = current_time
 
     # Init log file
     with open(filename, "w") as file:
@@ -156,6 +175,9 @@ try:
     while True:
                
         try:
+            # Loop through different headings
+            cycle_headings()
+
             current_time = time.monotonic()  # Store monotonic time
             current_heading = get_current_heading()
             
@@ -170,10 +192,10 @@ try:
             delta_time = current_time - last_time
             last_time = current_time
 
-            # Compute Derivative
-            ## check if logic
-            derivative = (error - previous_error) / delta_time if delta_time > 0 else 0
-            previous_error = error
+            # Filters out the derivative term
+            raw_derivative = (error - previous_error) / delta_time if delta_time > 0 else 0
+            filtered_derivative = alpha * raw_derivative + (1 - alpha) * filtered_derivative
+            derivative = filtered_derivative
 
             # Compute PID output
             output = (Kp * error) + (Kd * derivative)
@@ -188,12 +210,7 @@ try:
             if abs(output) > threshold:
                 if output > 0:  # Fire right thruster
                     print("Right Firing")
-                    
                     if not negative_thruster_on:
-                        # YELLOW LED = RIGHT THRUSTER
-                        # IMPART NEGATIVE
-                        yellow_led.value = True
-                        red_led.value = False
                         negative_thruster.value = True
                         negative_thruster_on = True
                         positive_thruster.value = False
@@ -202,22 +219,11 @@ try:
                 elif output < 0:  # Fire left thruster
                     print("Left Firing")
                     if not positive_thruster_on:
-                        # RED LED = LEFT THRUSTER
-                        # IMPART POSITIVE
-
-                        red_led.value = True
-                        yellow_led.value = False
                         positive_thruster.value = True
                         positive_thruster_on = True
                         negative_thruster.value = False
                         negative_thruster_on = False
-            else:
-                        positive_thruster.value = False
-                        positive_thruster_on = False
-                        negative_thruster.value = False
-                        negative_thruster_on = False
-                        red_led.value = False
-                        yellow_led.value = False
+
 
             # Blink LED
             if current_time - last_toggle_time >= blink_interval:
@@ -255,4 +261,5 @@ except Exception as e:
         time.sleep(0.25)
         red_led.value = False
         time.sleep(0.25)
+
 

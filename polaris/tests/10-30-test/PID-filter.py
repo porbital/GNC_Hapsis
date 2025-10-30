@@ -29,7 +29,7 @@
 #+----------------------------------------------------------------+#
 
 import time
-import board
+import board # type: ignore
 import digitalio
 import adafruit_bno055
 import busio
@@ -40,8 +40,9 @@ import storage
 
 # PID constants (Based on Simulation)
 Kp = 0.56
-Kd = 0.50
+Kd = 0.45
 
+# Alpha Term for Low-Pass Filter 
 # Desired heading
 # 0 -> North
 # 90 -> East
@@ -49,9 +50,20 @@ Kd = 0.50
 # 270 -> West
 setpoint = 0  # (Degrees) Point north
 
+# Define heading sequence and timing
+headings = [90, 180, 270]
+heading_index = 0
+last_heading_change = time.monotonic()
+heading_interval = 5  # seconds
+
 # PID variables
 previous_error = 0
 last_time = time.monotonic()
+filtered_derivative = 0
+
+# Alpha Term for low-pass filter
+# TODO: should be adjusted at some point
+alpha = 0.2
 
 # Thruster Control Variables
 positive_thruster_on = False
@@ -112,14 +124,14 @@ try:
     sdcard = adafruit_sdcard.SDCard(sd_spi, cs)
     vfs = storage.VfsFat(sdcard)
     storage.mount(vfs, "/sd")
-    
+
     current_time = time.localtime()
     filename = "/sd/log_{:04d}{:02d}{:02d}_{:02d}{:02d}{:02d}.csv".format(
     current_time.tm_year, current_time.tm_mon, current_time.tm_mday,
     current_time.tm_hour, current_time.tm_min, current_time.tm_sec)
-    
-    
-    
+
+
+
     # Setup Monotonic Timer (will not interfere
     # with clock speed of IMU)
     led_state = False
@@ -144,35 +156,54 @@ try:
     # Function to get current heading
     def get_current_heading():
         heading = sensor.euler[0]
-        print(heading)
+        #print(heading)
         return heading
+
+    #
+    def cycle_headings():
+        current_time = time.monotonic()
+        global heading_index, last_heading_change, setpoint
+
+        if current_time - last_heading_change >= heading_interval:
+            setpoint = headings[heading_index]
+            heading_index = (heading_index + 1) % len(headings)  # Cycle through headings
+            last_heading_change = current_time
 
     # Init log file
     with open(filename, "w") as file:
         file.write("Time,Angular Position,R Solenoid,L Solenoid,Angular Vel X,Angular Vel Y,Angular Vel Z,PID Error,P,D\n")
-    
-    
+
+
+
     # PID Loop
     while True:
-               
+
         try:
+            # Loop through different headings
+            cycle_headings()
+
             current_time = time.monotonic()  # Store monotonic time
             current_heading = get_current_heading()
-            
+
             ## For data logging
             gyro_x, gyro_y, gyro_z = sensor.gyro or (999,999,999)
-            
+
             # Compute with wraparound handling
             # This means 0 and 360 are treated the same.
             error = (setpoint - current_heading + 180) % 360 - 180
-                
+
             # Compute delta T
             delta_time = current_time - last_time
             last_time = current_time
 
             # Compute Derivative
             ## check if logic
-            derivative = (error - previous_error) / delta_time if delta_time > 0 else 0
+            
+            # Filters out the derivative term
+            raw_derivative = (error - previous_error) / delta_time if delta_time > 0 else 0
+            filtered_derivative = alpha * raw_derivative + (1 - alpha) * filtered_derivative
+            derivative = filtered_derivative
+
             previous_error = error
 
             # Compute PID output
@@ -184,16 +215,11 @@ try:
             # Determine thruster activation
             ## TODO: We should never need duration
             threshold = 5  # Deadzone
-            
+
             if abs(output) > threshold:
                 if output > 0:  # Fire right thruster
                     print("Right Firing")
-                    
                     if not negative_thruster_on:
-                        # YELLOW LED = RIGHT THRUSTER
-                        # IMPART NEGATIVE
-                        yellow_led.value = True
-                        red_led.value = False
                         negative_thruster.value = True
                         negative_thruster_on = True
                         positive_thruster.value = False
@@ -202,22 +228,11 @@ try:
                 elif output < 0:  # Fire left thruster
                     print("Left Firing")
                     if not positive_thruster_on:
-                        # RED LED = LEFT THRUSTER
-                        # IMPART POSITIVE
-
-                        red_led.value = True
-                        yellow_led.value = False
                         positive_thruster.value = True
                         positive_thruster_on = True
                         negative_thruster.value = False
                         negative_thruster_on = False
-            else:
-                        positive_thruster.value = False
-                        positive_thruster_on = False
-                        negative_thruster.value = False
-                        negative_thruster_on = False
-                        red_led.value = False
-                        yellow_led.value = False
+
 
             # Blink LED
             if current_time - last_toggle_time >= blink_interval:
@@ -230,7 +245,7 @@ try:
                 file.write(
                     f"{delta_time},{current_heading},{int(negative_thruster_on)},{int(positive_thruster_on)},{gyro_x},{gyro_y},{gyro_z},{output},{error},{derivative}\n"
                 )
-            
+
             print(error)
         except Exception as e:  # Log Errors
             print("An error occured: ", e)
