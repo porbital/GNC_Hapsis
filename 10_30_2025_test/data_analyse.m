@@ -1,5 +1,5 @@
 clear;clc;close all
-data = readtable("log_20000101_000837.csv");
+data = readtable("log_20000101_000016.csv");
 
 % Notice that first data point seems invalid
 data(1,:) = [];
@@ -53,6 +53,12 @@ grid on
 legend('Derivatve', 'X', 'Y', 'Z')
 
 
+figure
+plot(time_series, vecnorm(angVel, 2, 2) .* sign(angVel(:,2)))
+hold on
+grid on
+plot(time_series, 1 .* ([data.LSolenoid, data.RSolenoid] -0.5))
+axis padded
 
 
 
