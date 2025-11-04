@@ -1,0 +1,43 @@
+clear;clc;close all
+data = readtable("log_20000101_000837.csv");
+
+% Notice that first data point seems invalid
+data(1,:) = [];
+
+% time_series = zeros(height(data), 1);
+for ii = 1:376
+    if data.PIDError(ii) > 360
+        data(ii, :) = [];
+    else
+        if ii-1 = 1
+        else
+            time_series(ii) = time_series(ii-1) + data.Time(ii);
+        end
+        if data.AngularPosition(ii) > 310
+            data.AngularPosition(ii) = data.AngularPosition(ii) - 360;
+        end
+    end
+end
+
+setpoint =  data.AngularPosition + data.PIDError;
+figure
+plot(time_series, setpoint)
+
+figure
+plot(time_series, data.AngularPosition)
+xlabel('time(s)')
+ylabel('Angular position (deg)')
+grid on
+
+figure
+plot(time_series, atand(tand(data.PIDError)))
+xlabel('time(s)')
+ylabel('PID ERROR (deg)')
+grid on 
+
+figure
+plot(time_series, [data.LSolenoid, data.RSolenoid])
+axis padded
+grid on
+
+
