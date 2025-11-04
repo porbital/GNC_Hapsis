@@ -40,7 +40,7 @@ import storage
 
 # PID constants (Based on Simulation)
 Kp = 0.56
-Kd = 0.50
+Kd = 0.45
 
 # Desired heading
 # 0 -> North
@@ -74,10 +74,10 @@ yellow_led.direction = digitalio.Direction.OUTPUT
 
 # Setup PINS for Mosfets
 
-positive_thruster = digitalio.DigitalInOut(board.D13)
+positive_thruster = digitalio.DigitalInOut(board.D12)
 positive_thruster.direction = digitalio.Direction.OUTPUT
 
-negative_thruster = digitalio.DigitalInOut(board.D12)
+negative_thruster = digitalio.DigitalInOut(board.D13)
 negative_thruster.direction = digitalio.Direction.OUTPUT
 
 # thruster_3 = digitalio.DigitalInOut(board.D12)
@@ -144,7 +144,7 @@ try:
     # Function to get current heading
     def get_current_heading():
         heading = sensor.euler[0]
-        print(heading)
+        #print(heading)
         return heading
 
     # Init log file
@@ -183,17 +183,12 @@ try:
 
             # Determine thruster activation
             ## TODO: We should never need duration
-            threshold = 5  # Deadzone
+            threshold = 1  # Deadzone
             
             if abs(output) > threshold:
                 if output > 0:  # Fire right thruster
                     print("Right Firing")
-                    
                     if not negative_thruster_on:
-                        # YELLOW LED = RIGHT THRUSTER
-                        # IMPART NEGATIVE
-                        yellow_led.value = True
-                        red_led.value = False
                         negative_thruster.value = True
                         negative_thruster_on = True
                         positive_thruster.value = False
@@ -202,22 +197,11 @@ try:
                 elif output < 0:  # Fire left thruster
                     print("Left Firing")
                     if not positive_thruster_on:
-                        # RED LED = LEFT THRUSTER
-                        # IMPART POSITIVE
-
-                        red_led.value = True
-                        yellow_led.value = False
                         positive_thruster.value = True
                         positive_thruster_on = True
                         negative_thruster.value = False
                         negative_thruster_on = False
-            else:
-                        positive_thruster.value = False
-                        positive_thruster_on = False
-                        negative_thruster.value = False
-                        negative_thruster_on = False
-                        red_led.value = False
-                        yellow_led.value = False
+
 
             # Blink LED
             if current_time - last_toggle_time >= blink_interval:
