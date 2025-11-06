@@ -1,5 +1,7 @@
 clear;clc;close all
-data = readtable("log_20000101_000016.csv");
+data = readtable("log_20000101_000837.csv");
+% Data that seems good 006 124 224 524 837
+
 
 % Notice that first data point seems invalid
 data(1,:) = [];
