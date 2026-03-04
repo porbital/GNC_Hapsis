@@ -187,6 +187,7 @@
 	(net 68 "Net-(D17-A)")
 	(net 69 "Net-(D18-A)")
 	(net 70 "Net-(D19-A)")
+	(net 71 "unconnected-(A1-D5-Pad8)")
 	(footprint "TerminalBlock_Phoenix:TerminalBlock_Phoenix_MKDS-1,5-2_1x02_P5.00mm_Horizontal"
 		(layer "F.Cu")
 		(uuid "027c47ff-617d-408e-9a1b-f8f2efe70a82")
@@ -22817,9 +22818,9 @@
 			(drill 1)
 			(layers "*.Cu" "*.Mask")
 			(remove_unused_layers no)
-			(net 11 "PYRO_2")
+			(net 71 "unconnected-(A1-D5-Pad8)")
 			(pinfunction "D5")
-			(pintype "bidirectional")
+			(pintype "bidirectional+no_connect")
 			(teardrops
 				(best_length_ratio 0.3)
 				(max_length 1)
