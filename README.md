@@ -16,6 +16,8 @@ Things that still need to get done:
 
 - [x] Merge GNC code (`PID.cpp` is a general PID controller and needs to be properly implemented.)
 
+- [ ] Change GNC_Activation() function to use vertical **velocity** not **acceleration** (right??)
+
 - [ ] Test GNC system
 
 ## STAG PCB
