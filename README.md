@@ -6,34 +6,19 @@ Software and hardware for GNC Hapsis.
 
 ## STAG Software 
 
-The C++ code is stored in `STAG/flight_controller_v2`.
+The C++ code is stored in `STAG/flight_controller_v3`.
 
 This was developed using PlatformIO, but can be used with Arduino IDE as well.
 
-Things that still need to get done:
+The current software is complete and will be used on the STAG mission. 
 
-- [x] Implement Sensor Data (waiting on sensors to be delivered!)
-
-- [x] Merge GNC code (`PID.cpp` is a general PID controller and needs to be properly implemented.)
-
-- [ ] Change GNC_Activation() function to use vertical **velocity** not **acceleration** (right??)
-
-- [ ] Test GNC system
+Hardware-in-the-loop is possible with this code setup, and can be enabled by commenting out the flag in `config.h`
 
 ## STAG PCB
 
-The PCB for this project (version 3.1) is stored under `polaris3.1/`.
+The PCB for this project (version 4.1) is stored under `polaris4.1/`.
 
-Things that still need to get done:
-
-- [x] Add high-side switch to +15V power rail for MOSFET arming.
-    - We are no longer doing this. 
-
-- [x] PCB is ordered, but needs to be assembled once it arrives.
-    - V3.1 PCB is finished, but has some issues (MOSFET pins switched... my b... )
-
-- [ ] Order new PCB revision (Rev 4.1)
-
+The current PCB is fully complete. I assembled it without a stencil, using solder paste and a hot plate. (In the future, it is worth buying a stencil).
 
 ### AI Transparency Statement
 
