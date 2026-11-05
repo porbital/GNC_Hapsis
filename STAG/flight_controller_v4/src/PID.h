@@ -24,6 +24,8 @@ public:
   float getLastError() { return lastError; }
   float getLastDerivative() { return lastDerivative; }
   float getLastOutput() { return lastOutput; }
+
+  float windupCap(float integral);
   
 private:
   float kp, kd, ki;

@@ -28,10 +28,13 @@
 #define ABORT_FIRE_PYRO_TIME 10000 // Time after which to fire pyro if GNC fails (ms) - 10 minutes
 
 /* PID CONFIG */
-#define PID_KP 1.0
+#define PID_KP 0.8 // 0.8
 #define PID_KI 0.0
-#define PID_KD 0.6
+#define PID_KD 0.0 // 0.6
+#define I_MAX 90 // 180 was og
 
+
+// legacy cold gas code
 #define THRESHOLD_ON 5.0 // Control Effort needed to turn on thrusters
 #define THRESHOLD_OFF 2.0 // Control Effort needed to turn off thrusters 
 #define MIN_THRUSTER_PULSE 50 // Minimum thruster pulse duration in ms
