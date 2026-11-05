@@ -5,6 +5,7 @@
 #include "Sensors.h"
 #include "MissionState.h"
 #include "MissionWebServer.h"
+#include "chirp.h"
 
 PIDController pid(PID_KP, PID_KD, PID_KI);
 
@@ -40,9 +41,16 @@ void setup() {
   transitionToState(GROUND);
 }
 
+// code to test frequency response of plant system
+void loop() {
+  initActuators();
+  initChirp();
+}
+
+/*
 void loop() {
 
-  handleWebServer();
+  // handleWebServer();
 
   unsigned long currentTime = millis();
 
@@ -77,7 +85,7 @@ void loop() {
 
 
     // State machine
-    // Force state to GNC
+    // Force state to GNC - remove for actual flight
     currentState = GNC_ACTIVE;
     switch(currentState) {
       case GROUND:
@@ -146,7 +154,7 @@ void loop() {
     }
   }
 }
-  
+*/  
 
 
 void checkLiftoff() {

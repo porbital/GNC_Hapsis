@@ -95,10 +95,22 @@ void controlThrusters(float controlEffort) {
   // }
   
   // motor control is at 50 hz (20 ms)
-  // 1 ms is full reverse 5%
+  // 1 ms is full reverse 5% cw shaft down -> apply spin ccw
   // 1.5 ms is stop
-  // 2 ms is full forward 10%
-  analogWrite(MOTOR_CTRL, controlEffort * -0.170666667); // scale by conversion ratio
+  // 2 ms is full forward 10% ccw shaft down -> apply spin cw
+
+  Serial.println(int(controlEffort * 1.055 + 310));
+  float PWMsetting = int(-controlEffort * 1.055 + 310); // + 10 for nonzero crossover
+
+  // PID limits
+  if (PWMsetting > 500) {
+    PWMsetting = 500;
+  } else if (PWMsetting < 200) {
+    PWMsetting = 200;
+  }
+
+  analogWrite(MOTOR_CTRL, PWMsetting); // scale by conversion ratio
+  // analogWrite(MOTOR_CTRL, 200);
 
 }
 

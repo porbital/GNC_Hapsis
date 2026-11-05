@@ -26,6 +26,16 @@ float PIDController::wrapAngle(float angle) {
   return angle;
 }
 
+float PIDController::windupCap(float integral) { 
+  // compute final integral term - prevent windup
+  if (integral > I_MAX) {
+    integral = I_MAX;
+  } else if (integral < -1 * I_MAX) {
+    integral = -1 * I_MAX;
+  }
+  return integral;
+}
+
 float PIDController::compute(float currentValue, float deltaTime) {
   // Calculate error with wraparound handling
   float error = wrapAngle(setpoint - currentValue);
@@ -35,9 +45,15 @@ float PIDController::compute(float currentValue, float deltaTime) {
   if (deltaTime > 0.0) {
     derivative = (error - lastError) / deltaTime;
   }
-  
+
+  // Calculate integral
+  if (deltaTime > 0.0) {
+    integral += (error * deltaTime); // ZOH error approximation
+    integral = windupCap(integral);
+  }
+
   // Calculate output PD Control
-  float output = (kp * error) + (kd * derivative);
+  float output = (kp * error) + (ki * integral) + (kd * derivative);
   
   lastError = error;
   lastDerivative = derivative;
